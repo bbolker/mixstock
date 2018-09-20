@@ -1,0 +1,173 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2002.03.13.14.38.14;	author ben;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.08.20.21.07.05;	author ben;	state Exp;
+branches;
+next	;
+
+
+desc
+@higher-level functions for batch simulation etc. etc.
+@
+
+
+1.2
+log
+@changed plot.turtle.size to avoid method inconsistency warning
+@
+text
+@## higher-level functions for turtle analysis
+
+## obsolete?
+turtle.size <-
+  function(n,
+           true.freq=matrix(c(0.65, 0.33, 0.01, 0.01, 0.33, 0.65, 0.01, 0.01),ncol = 2),
+           true.contrib=c(0.9, 0.1), rseed=1004, nboot=1000, chainlen=NULL)  {
+  R <- ncol(true.freq)
+  H <- nrow(true.freq)
+  poolsampsize <- n/2
+  rooksampsize <- n/(2*R)
+  x1 <- hapfreq.condense(simturtle0(true.freq, true.contrib, rooksampsize = rooksampsize, 
+                 poolsampsize=poolsampsize, rseed = 1004))
+  cml.est <- genboot(x1,type="cml",nboot=nboot)
+  cml.est.p <- genboot(x1,type="cml",nboot=nboot,param=TRUE)
+  uml.est <- genboot(x1,type="uml",nboot=nboot,param=FALSE)
+  uml.est.p <- genboot(x1,type="uml",nboot=nboot,param=TRUE)
+  if (is.null(chainlen))
+    chainlen <- mcmc.chainlength.est(x1,mult=5)
+  mcmc.est <- tmcmc(x1,tot=chainlen)
+  list(R=R,true=true.contrib,cml=cml.est,cml.p=cml.est.p,uml=uml.est,uml.p=uml.est.p,mcmc=mcmc.est,
+       chainlen=chainlen)
+}
+
+plot.turtle.size <- function(x,...) {
+  R <- length(x$true)
+  plot(x$mcmc,notch=TRUE)
+  points(1:R,x$true,cex=2,col="purple")
+  points(1:R,coef(x$cml)$input.freq,col="blue",pch=16)
+  points(1:R,coef(x$uml)$input.freq,col="red",pch=16)
+}
+
+## simulate turtles
+simturtle0 <-
+  function(rookfreq,input.freq,rooksampsize,poolsampsize,rseed=NULL) {
+  if (!is.null(rseed))
+    set.seed(rseed)
+  rooksampsize <- round(rooksampsize,0)
+  poolsampsize <- round(poolsampsize,0)
+  H <- nrow(rookfreq)
+  R <- ncol(rookfreq)
+ ## simulate (multinomial samples from rookeries and pooled pop)
+  rooksamp.r <- apply(rookfreq,2,function(p)rmulti(1,rooksampsize,p))
+  pool.freq <- as.vector(rookfreq %*% input.freq)
+  poolsamp.r <- as.vector(rmulti(1,poolsampsize,pool.freq))
+  dimnames(rooksamp.r) <- list(hap=dec.to.roman(1:H),rook=LETTERS[1:R])
+  names(poolsamp.r) <- dimnames(rooksamp.r)[[1]]
+  return(as.turtle.data(list(poolsamp=poolsamp.r,rooksamp=rooksamp.r)))
+}
+
+simturtle1 <-
+  ## general-purpose simulation & analysis
+function(sampsize=NULL,
+         true.freq=matrix(c(0.65, 0.33, 0.01, 0.01, 0.33, 0.65, 0.01, 0.01),
+           ncol = 2),
+         true.contrib=c(0.9, 0.1),
+         boot=FALSE,param=FALSE,
+         data=NULL, rseed=1004, nboot=1000, chainlen=NULL,
+         ests=c("cmlboot.nonpar",
+           "cmlboot.par","umlboot.nonpar","umlboot.par","mcmc"),
+         verbose=FALSE,
+   contrib.only=FALSE) {
+  ## generate "data"
+  if (!is.null(data)) {
+    x <- data
+    if (!is.null(sampsize)) {
+      datasampsize <- sum(x$rooksamp)+sum(x$poolsamp)
+      x$rooksamp <- round(x$rooksamp*sampsize/datasampsize)
+      x$poolsamp <- round(x$poolsamp*sampsize/datasampsize)
+      if (boot)
+        x <- turtle.boot(x,param=param)
+    }
+  } else {
+    R <- ncol(true.freq)
+    poolsampsize <- sampsize/2
+    rooksampsize <- sampsize/(2*R)
+    x <- simturtle0(true.freq, true.contrib, rooksampsize = rooksampsize, 
+                 poolsampsize=poolsampsize, rseed = rseed)
+  }
+  x <- hapfreq.condense(x)
+  if (verbose) {
+    cat("Data for analysis:\n")
+    print(x)
+  }
+  results <- list()
+  if ("cml" %in% ests) {
+    if (verbose) cat("cml\n")
+    results <- c(results,cml=list(cml(x)))
+  }
+  if ("uml" %in% ests) {
+    if (verbose) cat("uml\n")
+    results <- c(results,uml=list(uml(x)))
+  }
+  if ("cmlboot.nonpar" %in% ests) {
+    if (verbose) cat("cmlboot.nonpar\n")
+    results <- c(results,cmlboot.nonpar=list(genboot(x,type="cml",nboot=nboot,param=FALSE)))
+  }
+  if ("cmlboot.par" %in% ests) {
+    if (verbose) cat("cmlboot.par\n")
+    results <- c(results,cmlboot.par=list(genboot(x,type="cml",nboot=nboot,param=TRUE)))
+  }
+  if ("umlboot.nonpar" %in% ests) {
+    if (verbose) cat("umlboot.nonpar\n")
+    results <- c(results,umlboot.nonpar=list(genboot(x,type="uml",nboot=nboot,param=FALSE)))
+  }
+  if ("umlboot.par" %in% ests) {
+    if (verbose) cat("umlboot.par\n")
+    results <- c(results,umlboot.par=list(genboot(x,type="uml",nboot=nboot,param=TRUE)))
+  }
+  if ("mcmc" %in% ests) {
+    if (verbose) cat("mcmc\n")
+    if (is.null(chainlen))
+      chainlen <- mcmc.chainlength.est(x,mult=5)
+    results <- c(results,mcmc=list(tmcmc(x,tot=chainlen,
+   contrib.only=contrib.only)))
+  }
+  results
+}
+
+#input.est <- apply(g0[,1:R],2,mean)
+#   input.sd <- apply(g0[,1:R],2,sd)
+#   input.quant <- apply(g0[,1:R],2,quantile,c(0.025,0.975))
+#   bias <- input.est - input.freq
+#   cover <- (input.quant[1,]<input.freq & input.freq<input.quant[2,])
+#   cv <- input.sd/input.cv
+#   list(cml.ok=cml.ok,cml.est=xvalR(g0R.opt$par)$input.freq,
+#        cml.lik=g0R.opt$val,cml.aic=2*g0R.opt$val+2*(R-1),
+#        uml.ok=uml.ok,uml.est=xval(g0.opt$par,R=R,H=H)$input.freq,
+#        uml.lik=g0.opt$val,uml.aic=2*g0.opt$val+2*((R-1)+R*(H-1)),
+#        mcmc.ok=mcmc.ok,mcmc.est=input.est,mcmc.sd=input.sd,
+#        mcmc.q025=input.quant[1,],
+#        mcmc.q975=input.quant[2,])
+# }
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d25 1
+a25 1
+plot.turtle.size <- function(x) {
+@

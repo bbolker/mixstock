@@ -1,0 +1,50 @@
+## exportPattern("^[^\\.]")
+useDynLib(mixstock)
+importFrom("graphics", "abline", "axis", "barplot", "hist", "layout",
+             "mtext", "par", "plot", "strheight", "strwidth", "text")
+importFrom("grDevices", "rainbow")
+importFrom("stats", "coef", "confint", "formula", "logLik", "median",
+           "model.matrix", "optim", "quantile", "rgamma", "rmultinom",
+           "rnorm", "runif", "sd", "setNames")
+importFrom("utils", "read.table", "setTxtProgressBar",
+           "txtProgressBar", "write.table")
+importFrom("lattice",xyplot,bwplot,lpoints,larrows)
+importFrom("plyr",ldply)
+importFrom("reshape2",melt)
+importFrom("coda",mcmc,as.mcmc,
+           as.mcmc.list,mcmc.list,raftery.diag,heidel.diag,gelman.diag,HPDinterval)
+importFrom("abind",abind)
+importFrom("plotrix",plotCI,staxlab)
+importFrom("R2WinBUGS",bugs)
+importFrom("R2jags",jags)
+export(MAXMARK,MAXSRC,addlabels.barplot,blockdiag,
+       rdirichlet,mixstock.data,as.mixstock.data,
+       sourcenames,marknames,mixnames,locnames,
+       as.mixstock.est,mixstock.est,
+       mcmc.chainlength.est,tmcmc,p.bayes,
+       sim.mark.freq,markfreq.condense,calc.mult.RL,calc.GR,
+       calc.mult.GR,nsource,nmix,nmark,mm.wbugs,genboot,pm.wbugs,
+       write.TO.bugscode,sourcesize.wbugs,
+       simmixstock0,simmixstock1,simmixstock2,
+       get.bot,get.frq,get.ctl,get.bse,get.mix,put.ctl,put.bse,
+       put.mix,put.mp,get.mp.input,
+       as.mixstock.est.bugs,as.mixstock.est.mcmc,
+       as.mcmc.bugs,cml,uml,uml.em,uml.ds,uml.lik,uml.grad,
+       cml.lik,dcmat.a,
+       expand.bugs.data,mixstock.boot,mysum,
+       runsims,mysumvec,packval,unpackval,p.to.q,q.to.p,startvec0,startvec,lsolve,
+       normcols)
+exportClasses(toptim,mixstock)
+S3method(plot,mixstock.data)
+S3method(plot,mixstock.est)
+S3method(xyplot,mixstock.est)
+S3method(print,mixstock.data)
+S3method(print,mixstock.est)
+S3method(coef,mixstock.est)
+S3method(confint,mixstock.est)
+S3method(summary,mixstock.est)
+S3method(as.data.frame,mixstock.est)
+
+
+
+

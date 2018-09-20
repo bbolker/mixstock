@@ -1,0 +1,187 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2001.08.21.14.01.07;	author ben;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.08.20.21.07.23;	author ben;	state Exp;
+branches;
+next	;
+
+
+desc
+@code for translating to & from input files for Masuda & Pella code
+@
+
+
+1.2
+log
+@fixed bug in put.mp (1:poolsamp[i] led to two lines when
+poolsamp[i]==0, instead of zero)
+@
+text
+@## code for reading from/writing to Masuda&Pella control files
+
+get.bot <- function(fn) {
+   fn <- paste(fn,".BOT",sep="")
+   x <- read.table(fn)
+   x
+}
+
+
+get.frq <- function(fn) {
+   fn <- paste(fn,".FRQ",sep="")
+   x <- read.table(fn)
+   x
+}
+
+get.ctl <- function(fn) {
+   fn <- paste(fn,".CTL",sep="")
+   fnconn <- file(fn,open="rt")
+   x <- readLines(fnconn,n=19)  ## read file as character strings
+   title <- x[1]
+   length <- as.numeric(x[8])
+   R <- as.numeric(x[9])
+   ranseed <- as.numeric(x[11:13])
+## is there a way to do this with read.table?
+   tab <- scan(fnconn,what=list(double(1),double(1),"",double(1)))
+   list(title=title,tot=length,R=R,ranseed=ranseed,fprior=tab[[2]],
+         rookname=tab[[3]],startval=tab[[4]])
+}
+
+get.bse <- function(fn) {
+ fn <- paste(fn,".BSE",sep="")
+ tab <- read.table(fn)
+ rooksamp <- t(tab[,-(1:3)])
+ list(rooksamp=rooksamp)
+}
+
+get.mix <- function(fn) {
+  fn <- paste(fn,".MIX",sep="")
+  tab <- read.table(fn)
+  poolsamp <- apply(tab,2,sum)
+  list(poolsamp=poolsamp)
+}
+
+put.ctl <- function(fn,which=1,tot,ranseed=c(899271,4480026,90092812),
+                 thin=1,title="auto-gen R input",rooknames,fprior,startval,H) {
+   ctl.fn <- paste(fn,which,".CTL",sep="")
+   sink(ctl.fn)
+   cat(title,"\n")
+   sapply(c("BSE","MIX"),
+        function(ext) cat(paste(fn,".",ext,"\n",sep="")))
+   sapply(c("SUM","BOT","FRQ","B01"),
+        function(ext) cat(paste(fn,which,".",ext,"\n",sep="")))
+   cat(tot,"\n")
+   R <- length(rooknames)
+   cat(R,"\n")
+   cat(1,"\n")  ## number of characters -- always 1
+   cat(ranseed,sep="\n")
+   cat(thin,"\n") ## composition thin
+   cat(thin,"\n") ## frequency thin
+   cat(paste("(",paste(rep(c("I1","X"),H),collapse=","),")\n",sep=""))
+   cat(paste("(I3,2X,I1,3X,",  ## number and num. of characters
+                 paste(rep(c("I3","X"),H+1),collapse=","),")\n",sep=""))
+                 ## total and 
+   cat("T T T T\n")
+   cat(formatC(1,width=3),
+       formatC(H,width=3),
+       format.char("F",width=3,flag="+"),  ## Hardy-Weinberg,
+       "  ",
+       format.char("mtDNA",width=18,flag="+"),"\n",sep="")
+   for (i in 1:R) {
+     ## FORTRAN format specified: I3,1X,F7.6,2X,A18,1X,F7.6
+     ## can't quite match FORTRAN FX.Y format: digits=n always
+     ## gives a minimum width of n+2 (decimal point+leading zero)
+      cat(formatC(i,width=3),
+          " ",
+          formatC(fprior[i],width=6,digits=5,format="f"),
+          "  ",
+          format.char(rooknames[i],width=18),
+          " ",
+          formatC(startval[i],width=6,digits=5,format="f"),
+          "\n",
+          sep="")
+    }
+  sink()
+}
+
+put.bse <- function(fn,rooksamp) {
+  fn <- paste(fn,".BSE",sep="")
+  sink(fn)
+  sapply(1:ncol(rooksamp),
+       function(i){
+          cat(formatC(i,format="d",width=3),
+              "  ",
+              1,
+              "   ",
+              formatC(sum(rooksamp[,i]),width=3,flag="-")," ",
+              paste(formatC(rooksamp[,i],width=3,flag="-"),collapse=" "),
+              " ",  ## extra space necessary if "X" present at end of format line in CTL
+              "\n",
+              sep="")})
+   sink()
+}
+
+put.mix <- function(fn,poolsamp) {
+  fn <- paste(fn,".MIX",sep="")
+  tmpvec <- function(which,H) {
+     v <- rep(0,H)
+     v[which] <- 1
+     paste(formatC(v,format="d",width=1),collapse=" ")
+  }
+  sink(fn)
+  H <- length(poolsamp)
+  for (i in 1:H)
+    if (poolsamp[i]>0)
+      for(j in 1:poolsamp[i])
+        cat(tmpvec(i,H),"\n",sep="")
+  sink()
+}
+
+put.mp <- function(data,tot=25000,title="Input file auto-gen from R",
+                fn="test",ranseed=c(899271,4480026,90092812)) {
+  put.mix(fn,data$poolsamp)
+  put.bse(fn,data$rooksamp)
+  R <- data$R
+  fprior <- rep(1/R,R)
+  rooknames <- dimnames(data$rooksamp)[[2]]
+  for (r in 1:R) {
+    startval <- rep(0.05/(R-1),R)
+    startval[r] <- 0.95
+    put.ctl(fn,title=paste(title," [rookery ",r,": ",
+      rooknames[r],"]",sep=""),which=r,tot=tot,ranseed=ranseed,
+                 thin=1,rooknames=rooknames,fprior=fprior,startval=startval,
+                 H=data$H) 
+   }
+}
+
+get.mp.input <- function(name,which=1) {
+  ctl <- get.ctl(paste(name,which,sep=""))
+  bse <- get.bse(name)
+  mix <- get.mix(name)
+  rooksamp <- bse$rooksamp
+  dimnames(rooksamp) <- list(NULL,ctl$rookname)
+  list(rooksamp=rooksamp, poolsamp=mix$poolsamp, a = 1, startiter=1, maxiter=ctl$tot, 
+       startfval = ctl$startval, thin = 1, fprior = ctl$fprior, rptiter = -1)
+}
+
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d114 2
+a115 1
+     for(j in 1:poolsamp[i])
+@

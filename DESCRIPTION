@@ -1,0 +1,27 @@
+Package: mixstock
+Version: 0.9.9
+Date: 2015-08-08
+Title: Functions for Mixed Stock Analysis
+Author: Ben Bolker <bolker@mcmaster.ca>
+Maintainer: Ben Bolker <bolker@mcmaster.ca>
+Depends:
+    R (>= 3.0.0)
+Imports:
+    coda,
+    plotrix,
+    abind,
+    lattice,
+    plyr,
+    reshape2,
+    R2WinBUGS,
+    R2jags
+Suggests:
+    ggplot2,
+    grid,
+    knitr
+Description: Mixed stock analysis functions.
+License: GPL
+VignetteBuilder: knitr
+BuildVignettes: yes
+LazyData: yes
+RoxygenNote: 6.0.1
