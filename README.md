@@ -6,6 +6,8 @@ The package is not on CRAN, and hasn't been for some time, because of fairly tri
 
 If you want to install the package, at present you will need to have the `devtools` package, *and the R compilation tools*, installed. Then you can either use `devtools::install_version("mixstock","0.9.5.1")` (to install the last archived version from CRAN) or `devtools::install_github("bbolker/mixstock")` (to install the version from this repository, which may be more up-to-date).
 
+As far as I know the package is fully compatible with recent versions of R, but I haven't checked. If you have any problems (with compatibility or any other aspects of the package), please [post an issue](https://github.com/bbolker/mixstock/issues) for me to look at.
+
 If you really need the package and are unable to install compilation tools for some reason, you'll need to contact me and convince me to build a binary version of the package for you.
 
 If anyone is interested in helping to bring this package up-to-date and getting it back on CRAN, please let me know! This could be done either by (1) fixing the problems with the C code or (2) removing the C code (and the corresponding R functions) from the package.
