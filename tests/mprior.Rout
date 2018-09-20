@@ -1,0 +1,109 @@
+
+R Under development (unstable) (2012-01-01 r58032)
+Copyright (C) 2012 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: i686-pc-linux-gnu (32-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> library(mixstock)
+Loading required package: coda
+Loading required package: lattice
+Loading required package: plotrix
+Loading required package: abind
+> Z <- simmixstock2(nsource=4,nmark=5,nmix=3,
++                  sourcesize=c(4,2,1,1),
++                  sourcesampsize=rep(25,4),
++                  mixsampsize=rep(30,3),rseed=1001)               
+> Zfit0 <- mm.wbugs(Z,sourcesize=c(4,2,1,1),pkg="JAGS",n.iter=200)
+Loading required package: R2jags
+Loading required package: R2WinBUGS
+Loading required package: rjags
+linking to JAGS 3.2.0
+module basemod loaded
+module bugs loaded
+Loading required package: parallel
+
+Attaching package: ‘R2jags’
+
+The following object(s) are masked from ‘package:coda’:
+
+    traceplot
+
+module glm loaded
+Compiling model graph
+   Resolving undeclared variables
+   Allocating nodes
+   Graph Size: 396
+
+Initializing model
+
+Warning messages:
+1: glm.fit: algorithm did not converge 
+2: glm.fit: algorithm did not converge 
+3: glm.fit: algorithm did not converge 
+> Zfit1 <- mm.wbugs(Z,sourcesize=c(4,2,1,1),pkg="JAGS",n.iter=200,
++                                     mixprior=0.5)
+Compiling model graph
+   Resolving undeclared variables
+   Allocating nodes
+   Graph Size: 396
+
+Initializing model
+
+Error in glm.fit(x = structure(c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  : 
+  NA/NaN/Inf in foreign function call (arg 1)
+In addition: Warning messages:
+1: glm.fit: algorithm did not converge 
+2: glm.fit: algorithm did not converge 
+3: glm.fit: algorithm did not converge 
+4: step size truncated due to divergence 
+Warning messages:
+1: glm.fit: algorithm did not converge 
+2: glm.fit: algorithm did not converge 
+3: glm.fit: algorithm did not converge 
+4: glm.fit: algorithm did not converge 
+5: glm.fit: algorithm did not converge 
+6: glm.fit: algorithm did not converge 
+7: glm.fit: algorithm did not converge 
+8: glm.fit: algorithm did not converge 
+9: glm.fit: algorithm did not converge 
+10: glm.fit: algorithm did not converge 
+> Zfit2 <- mm.wbugs(Z,sourcesize=c(4,2,1,1),pkg="JAGS",n.iter=200,
++                                     mixprior=c(3,1,1,1))
+Compiling model graph
+   Resolving undeclared variables
+   Allocating nodes
+   Graph Size: 396
+
+Initializing model
+
+> mp <- matrix(sample(1:5,replace=TRUE,size=16),nrow=4)
+> Zfit3 <- mm.wbugs(Z,sourcesize=c(4,2,1,1),pkg="JAGS",n.iter=200,
++                                     mixprior=mp)
+Compiling model graph
+   Resolving undeclared variables
+   Allocating nodes
+   Graph Size: 396
+
+Initializing model
+
+Warning message:
+glm.fit: algorithm did not converge 
+> 
+> 
+> proc.time()
+   user  system elapsed 
+  8.596   1.736  11.221 

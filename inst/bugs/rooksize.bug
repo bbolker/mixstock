@@ -1,0 +1,47 @@
+# BUGS code for mixed stock analysis with a single gyre
+
+model{
+
+   for(i in 1:N){
+    y[i,1:H] ~ dmulti(q[Z[i],],1);
+    Z[i] ~ dcat(theta[1:R]);
+   }
+
+
+  for(j in 1:R){x[j,1:H] ~ dmulti(q[j,1:H],T[j])}
+  for(j in 1:R){T[j] <- sum(y[j,])}
+  for(j in 1:R){q[j,1:H] ~ ddirch(beta[j,])
+  for(j in 1:R){
+    for(h in 1:H){beta[j,h] <- pb[h]}
+  }
+ 
+   for(j in 1:(R-1)){theta[j] <- xi[j]/(sum(xi[])+1)}
+   theta[R] <- 1-sum(theta[1:(R-1)])
+   for(j in 1:(R-1)){ xi[j] <- exp(xi0[j])}
+   for(j in 1:(R-1)){xi0[j] ~  dnorm(mu[j],sigma2)}
+   for(j in 1:(R-1)){ mu[j] <- a0+a1*alrn[j]}
+   a0 ~ dnorm(0,1)
+   a1 ~ dnorm(0,1)I(0,)
+   sigma2 ~ dgamma(1,1)
+
+}
+
+# Most notation follows Appendix A:
+#      N: number of individuals sampled from the mixed stock
+#      R: number of rookeries/source populations
+#      H: number of haplotypes
+#      y: mixed population haplotype data (N by H array)
+#      Z: imputed origin
+#      q: rookery haplotype frequencies (R by H array)
+#  theta: rookery contributions
+#      x: rookery haplotype data (R by H array)
+#   beta: parameters for rookery haplotype frequencies 
+#     mu: expected mean contribution (alr)
+#     a0: intercept of alr-transformed size and contribution relationship
+#     a1: slope of alr-transformed size and contribution relationship
+# sigma2: variance of alr-transformed size and contribution relationship
+#   alrn: alr-transformed rookery sizes
+#     pb: prior parameters for haplotype frequencies
+
+Ecological Archives A015-009-A2
+Toshinori Okuyama and Benjamin M. Bolker. 2005. Combining genetic and ecological data to estimate sea turtle origins. Ecological Applications 15:315?325.

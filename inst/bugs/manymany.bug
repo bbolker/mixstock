@@ -1,0 +1,69 @@
+model{
+## DATA
+##    Tm[m]: total samples from mixed pop. m
+##    sourcesamp[r,h]: number of samples of marker h from source r
+##    mixsamp[m,n,h]: marker ID (0/1) of individual n in mixed pop m
+##       (array with dimensions [MIX,MAXN,H] where MAXN is max(Tm))
+##    sourcesize[r]: source size
+##    R: number of sources
+##    H: number of markers
+##    MIX: number of mixed pops.
+## PRIORS
+##    beta[r,h]: marker (h) frequency in source r (fixed to fp)
+##    fp[h]: pseudo-Bayesian prior prob. for marker h (input)
+##    dp[m]: Dirichlet prior for contribution to mixed pop (fixed to 1)
+## VARIABLES
+##    Z[m,n]: source (1..R) origin of individual n from mixed pop. m
+##    pi[r,h]: frequency of marker h in source r
+##    theta[m,r]: probability that an individual in mixed pop. m comes from source r
+##    T[r]: total sample size from source r
+##    DERIV[m,r]: total individuals from source r to mixed pop. m
+##    div[m,r]: proportion of source r going to mixed pop. m
+##    delta[m,r]: intermediate variable
+##    mixsize[m]: estimated mixed population size
+##    rmixsize[m]: estimated relative mixed population size
+##
+## assign origins for mixed-sample individuals
+   for (j in 1:MIX) {
+      for(i in 1:Tm[j]){
+        mixsamp[j,i,1:H] ~ dmulti(pi[Z[j,i],1:H],1);
+        Z[j,i] ~ dcat(theta[j,1:R]);
+      }
+   }
+## model for source marker frequencies (pi)
+  for(i in 1:R){sourcesamp[i,1:H] ~ dmulti(pi[i,1:H],T[i])}
+  for(i in 1:R){pi[i,1:H] ~ ddirch(beta[i,])
+     for(k in 1:H){	  
+        beta[i,k] <- fp[k]
+     }
+  }
+## draw proportions from r to m
+  for(j in 1:R){
+     for (k in 1:(MIX+1)) {
+	div[j,k] <- delta[j,k]/sum(delta[j,])
+	delta[j,k] ~ dgamma(dp[k],1)
+    }
+  }
+## scale source contributions by size
+  for (k in 1:(MIX+1)) {
+     for(i in 1:R) {
+       DERIV[k,i] <- div[i,k]*sourcesize[i]
+     }
+  }
+## calculate imputed sizes of mixed populations
+  for(i in 1:MIX){
+     mixsize[i] <- sum(DERIV[i,])
+     rmixsize[i] <- mixsize[i]/sum(mixsize[])
+  }
+## calc. relative contributions of sources to mixed pops
+  for(j in 1:MIX){
+    for(i in 1:R){
+      theta[j,i] <- DERIV[j,i]/sum(DERIV[j,])
+    }
+  }
+## now set as data
+## set mixed pop. prior
+##  for(i in 1:(MIX+1)){
+##    dp[i] <- 1
+##  }
+}

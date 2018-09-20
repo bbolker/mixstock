@@ -1,0 +1,802 @@
+\documentclass[11pt]{article}
+%\VignetteIndexEntry{basic examples of mixed stock analysis}
+%\VignettePackage{mixstock}
+%\VignetteDepends{ggplot2}
+%\VignetteEngine{knitr::knitr}
+\usepackage{palatino}
+\usepackage[american]{babel}
+\newcommand{\R}{{\sf R}}
+\newcommand{\Splus}{{\sf S-PLUS}}
+%\newcommand{\fixme}[1]{\textbf{FIXME: #1}}
+%% took out \usepackage{lineno}/\linenumbers: fragile with framed package
+\newcommand{\fixme}[1]{}
+\newcommand{\windows}{\textbf W?}
+\usepackage{url}
+\usepackage{natbib}
+\usepackage{alltt}
+\usepackage{hyperref}
+\newcommand{\code}[1]{{\tt #1}}
+\bibliographystyle{chicago}
+
+\title{Mixed stock analysis in R: getting started with the 
+  \code{mixstock} package}
+\author{Ben Bolker}
+\date{\today}
+\begin{document}
+\maketitle
+
+<<Rver,echo=FALSE>>=
+Rver <- paste(R.version$major,R.version$minor,sep=".")
+@ 
+
+<<knitopts,echo=FALSE,message=FALSE>>=
+library("knitr")
+opts_chunk$set(fig.width=6,fig.height=4)
+knit_hooks$set(base.figure=function() { par(las=1,bty="l") })
+@
+\section{Introduction}
+The \code{mixstock} package is a set of routines
+written in the \R\ language
+\citep{Rmanual} for doing mixed stock
+analysis using
+data on haploid genetic markers gathered
+from source populations and from one or more mixed populations.
+The package was developed for
+analyzing mitochondrial DNA (mtDNA) markers from
+sea turtle populations, but should be applicable
+to any case with discrete sources, discrete mixed
+populations, and discrete markers.
+(However, I do refer to sources as ``rookeries''
+and markers as ``haplotypes'' throughout this document,
+and you will see other echoes of its origins, e.g.
+the number of markers is internally
+stored as variable \code{H} and the number of sources is 
+stored as \code{R}.)
+The package is intended to be self-contained,
+but some familiarity with \R\ or \Splus\ will
+definitely be helpful.  (Some familiarity with your
+computer's operating system, which is probably
+Microsoft Windows, is also assumed.)
+The statistical methods implemented in the
+package are described in \cite{bolk+03c}, \cite{OkuyamaBolker2005},
+\cite{Bolker+07}, and
+\cite{PellMasu01}.
+
+\textbf{This package is in the public domain (GNU General Public
+License), is \textcopyright 2008-2014 Ben Bolker and
+Toshinori Okuyama,
+and comes with NO WARRANTY.  Please suggest improvements to
+me (Ben Bolker) at {\tt bolker@mcmaster.ca}.}
+
+If you are feeling impatient and confident, turn to
+``Quick Start'' (section~\ref{sec:quickstart}).
+
+\section{Installation}
+You can skip this section if you are reading this
+file via the \code{vignette()} command in \R --- that
+means you've already successfully installed the
+package.
+
+To get started, you will have to download and
+install the \R\ package, a general-purpose
+statistics and graphics package, from
+CRAN (the ``Comprehensive R Archive Network'');
+go to \url{http://www.r-project.org} and navigate
+from there\footnote{if you are in
+the US and using Windows, you can go directly to
+\url{http://cran.us.r-project.org/bin/windows/base/}:
+you will need to download a file called \code{R-x.y.z-win.exe}
+which will install \R\ for you, when executed; \code{x.y.z}
+stands for the current version of \R\ (\Sexpr{Rver} as of \today).
+Otherwise, see
+\url{http://www.r-project.org/mirrors.html} for a list of alternative
+``mirror sites'' closer to you and navigate through the
+web pages to find a version to install (if you are not
+using Unix and/or an expert, you will want to look for
+a \emph{binary} version of R).}
+
+The package has been developed under Linux and runs under
+Windows; it has been tested less thoroughly on MacOS.
+In general, the main compatibility/set-up issue will be
+running hierarchical models with WinBUGS or JAGS.
+The download file for \R\ is about 52Mb.
+If you are running an antivirus package that is configured to check
+the signatures of executable files before they run, make sure you turn
+it off or register the new files installed by \R\ before proceeding.
+You may also have some difficulty downloading packages if you have
+a firewall running on your computer --- if you have trouble,
+you may want to (temporarily, at your own risk!) disable it.
+
+Once you have downloaded and installed \R,
+start the \R\ program.  The setup program
+should have asked whether you want to add a shortcut
+to the desktop or the Start menu: if
+you didn't, you will have to search for a file
+called \code{Rgui.exe}, which probably lives somewhere
+(on Windows) like \verb+Program Files\R\R-+{\tt \Sexpr{Rver}}\verb+\bin+ depending on what version of \R\ you are using and where
+you decided to install it.
+\R\ will open up a window for you with a command
+prompt ({\verb+>+}), at which you can type
+\R\ commands.  (Don't panic.)
+
+You can exit \R\ by selecting \code{File/Exit} from
+the menus, or by typing \code{q()} at the command prompt.
+In general, if you want help on a particular command
+(e.g. \code{uml}) you can type a question mark
+followed by the command name (e.g. \code{?uml})
+
+You need to install the JAGS package (a separate
+software package that \code{mixstock} uses for some
+analyses).  Go to \href{http://sourceforge.net/projects/mcmc-jags/files/}{http://sourceforge.net/projects/mcmc-jags/files/}. The page should offer you a download compatible with your OS (look for ``Looking for the latest version? Download JAGS-...'')
+
+If you plan to use WinBUGS (an alternative to JAGS that runs on
+Windows, and with some difficulty on MacOS or Linux), you 
+will need to go to the \href{http://www.mrc-bsu.cam.ac.uk/bugs/winbugs/contents.shtml}{BUGS web page} and follow the installation instructions.
+
+You will next need to install the \code{mixstock}
+package and several other auxiliary packages, over
+the web, from within \R. You will need to
+maintain a connection to the internet for this
+piece, although it is also possible to do
+this step off-line.  Within R, at the command prompt,
+type
+<<instpkgs,eval=FALSE>>=
+install.packages("mixstock")
+@ 
+this should install the package and all of the packages
+it depends on. If R asks you whether 
+you want to delete the source files, answer \code{y};
+you shouldn't need them again.
+
+(If you don't have a convenient internet connection,
+you can download the files corresponding
+to \code{mixstock} and all of its dependent
+packages and install them by going
+to the \code{Packages} menu within R and choosing
+\code{Install from local zip file}.
+However, you will need compilation tools installed --- see
+the documentation or FAQ for using R with your operating system.)
+
+\section{Loading the \code{mixstock} package and reading  in data}
+
+Start every session with the \code{mixstock} package by
+typing 
+<<loadpkg>>=
+library(mixstock)
+@ 
+at the command prompt;
+this loads the \code{mixstock} package.
+
+The package can read plain text data files that are separated by white
+space (spaces and/or tabs) or commas.  If your data are in Microsoft
+Excel, you should export them as a comma-separated (CSV) file.  If
+they are in Word, save them as plain text.  The expected data format
+is that each row of data represents a haplotype, each column except
+the last represents samples from a particular rookery, and the last
+column is the samples from the mixed population.  Each row and column
+should be named; your life will be simpler if the names do not have
+spaces or punctuation other than periods in them (a common \R\ convention
+is to replace spaces with periods, e.g. \code{North.FL} for
+``North FL'').  Do not label the haplotype column; \R\ detects the
+presence of column names by checking whether the first row has one
+fewer item than the rest of the rows in the file.
+
+For example, a plain text file (with
+haplotype labels \code{H1} and \code{H2}
+and rookery labels \code{R1}--\code{R3})
+could look like this:
+\begin{verbatim}
+  R1 R2 R3 mix
+H1 1 2 3 4
+H2 3 4 5 6
+\end{verbatim}
+Or a comma-separated file could look like this
+(note that the first line has only 4 elements while
+subsequent lines have 5).
+\begin{verbatim}
+R1,R2,R3,mix
+H1,1,2,3,4
+H2,3,4,5,6
+\end{verbatim}
+
+If you have data from multiple mixed stocks, either
+put those data in a separate file or run them all
+together as columns of the same table (you will
+get a chance to specify how many sources and how
+many mixed populations there are):
+\begin{verbatim}
+R1,R2,R3,mix1,mix2
+H1,1,2,3,4,7
+H2,3,4,5,6,0
+\end{verbatim}
+
+To read in your data,
+you first need to make sure that \R\ knows how to
+find them.
+The easiest thing to do is to use the
+menu options\footnote{\code{File/Change working directory}
+on Windows, \code{Misc/Change working directory} or Apple-D
+on MacOS}
+to move to a directory (i.e., folder) you
+will use for analysis, which should contain the data
+files you want to use and will contain \R's working files.
+You can use the \code{getwd()} (get working directory)
+command to see where you are, and
+\code{list.files()} to list the files in the current
+directory.
+%You can also specify the whole path to the data files
+%(e.g. \verb+My Documents\turtlestuff\turtledata.csv+),
+%or move your data files to \R's default working directory.
+Once you have changed to the appropriate directory,
+you can read in your data files and assign the
+data to a variable.
+For example, if you had a file 
+with space-separated data called
+\code{mydata.dat}, you could it read it in 
+by typing
+<<readdata1,eval=FALSE>>=
+mydata = read.table("mydata.dat",header=TRUE)
+@ 
+and if you
+have a comma-separated file called
+\code{mydata.csv} you can use
+<<readdata2,eval=FALSE>>=
+mydata = read.csv("mydata.csv")
+@ 
+(1) \code{header=TRUE} is required with
+\code{read.table} to specify that there is
+a header line in the file; it is part of the
+default settings for \code{read.csv}.  Make
+sure there are no extra lines at the top of
+your data file, although you can use the \code{skip}
+argument (see \code{?read.table} for details) if
+necessary.  (2) You must specify the \emph{extension} of the
+file --- the letters after the dot.  Sometimes
+your operating system will hide that information
+from you.
+
+If you have your own data you can read it in
+now and follow along, or you can use the
+\code{lahanas98raw}
+data set that comes with the package
+\citep{Laha+98}:
+<<lahanas98raw>>=
+mydata = lahanas98raw
+@ 
+
+To make sure that everything came out OK, type
+the name of the variable alone at the command prompt: e.g.
+<<printdata,eval=FALSE>>=
+mydata
+@ 
+to print out the data, or
+<<head>>=
+head(mydata)
+@ 
+to print out just the first few lines, as shown above.
+
+Next, use the \code{as.mixstock.data} command
+to convert your data to a form that the package can use:
+<<convert1>>=
+mydata = as.mixstock.data(mydata)
+@ 
+
+Once your data are converted in this way,
+you can use \code{plot(mydata)} to
+produce a summary plot of the data
+(Figure~\ref{fig:data1}).
+
+%% need short caption here 
+<<data1,echo=FALSE,fig.scap="Basic plot of turtle mtDNA haplotype data",fig.cap="Basic plot of turtle mtDNA haplotype data, using \\code{plot(mydata,mix.off=2)} (\\code{mix.off=2} leaves a slightly larger space between the rookery and mixed stock data)",base.figure=TRUE>>=
+plot(mydata,mix.off=2)
+@
+
+%\begin{figure}
+<<echo=FALSE,eval=FALSE>>=
+require(ggplot2)
+require(reshape2)
+tmpf <- function(m0) {
+  mm1 <- as.matrix(m0)
+  mm2 <- sweep(mm1,2,colSums(mm1),"/")
+  transform(melt(mm2),
+            Var1=factor(Var1,levels=rownames(m0)))
+}
+m2 <- matrix(mydata$mixsamp,ncol=1,dimnames=list(names(mydata$mixsamp),"Mixed"))
+g1 <- ggplot(tmpf(mydata$sourcesamp),aes(x=Var2,y=value,fill=Var1))+geom_bar()+coord_flip()+
+  scale_fill_brewer(palette="Set3")+theme_bw()+labs(x="")
+g2 <- ggplot(tmpf(m2),aes(x=Var2,y=value,fill=Var1))+geom_bar()+coord_flip()+
+  scale_fill_brewer(palette="Set3")+theme_bw()+labs(x="")+opts(legend.position="none")
+## library(ggExtra)
+## align.plots(g1,g2,heights=unit(c(0.1,0.9)))
+print()
+@ 
+%\label{fig:ggdata}
+%\caption{Alternative, using \code{ggplot2}}
+%\end{figure}
+
+The default plot is a barplot, with the proportions of each haplotype
+sampled in each rookery represented by a separate bar; the mixed
+population data are shown as the rightmost bar.\footnote{you can
+change from the default colors by specifying a \code{colors=} argument:
+e.g. if you have 10 haplotypes, \code{colors=topo.colors(10)} or
+\code{colors=gray((0:9)/9)}. See \code{?gray} or \code{?rainbow} for
+more information.}
+
+Before proceeding, you will need to ``condense'' your data
+set by (1) excluding any haplotype samples that are found only in the
+mixed population (such ``singleton'' haplotypes
+will break some estimation methods, and
+provide no useful information on turtle origins) and (2) lumping
+together all haplotypes that are found only in a single rookery and
+the mixed population (distinguishing among such haplotypes provides no
+extra information in our analyses, and may slow down estimation).
+You can do this by typing
+<<condense>>=
+mydata = markfreq.condense(mydata)
+@ 
+(To examine the condensed form of the data,
+you can print them by typing \verb+mydata+ at
+the command prompt, \verb+head(mydata)+ to see
+just the first few lines, or \verb+plot(mydata)+ to see
+the graphical summary [Figure~\ref{fig:condensed}].)
+
+Some data are already entered in the package
+in the condensed format; \code{lahanas98} 
+is the green turtle haplotype frequency data from \cite{Laha+98}, while
+\code{bolten98}
+is the loggerhead haplotype frequency data from \cite{Bolt+98}.
+Both of these data sets are 
+already converted and condensed: \code{lahanas98raw} and \code{bolten98raw}
+give you the corresponding raw data tables.
+
+<<condensed,echo=FALSE,fig.scap="Condensed haplotype data from Lahanas 1998",fig.cap="Condensed haplotype data from Lahanas 1998 (\\code{plot(lahanas98, mix.off=2, leg.space=0.4)}; \\code{leg.space=0.4} leaves more room for the legend).">>=
+plot(lahanas98,mix.off=2,leg.space=0.4)
+@
+
+\section{Stock analysis}
+You can use the \code{mixstock} package to
+run various mixed-stock analyses on your data.
+
+\subsection{Conditional and unconditional maximum likelihood}
+You can do standard conditional maximum likelihood
+(CML) analysis using \verb+cml(mydata)+.
+\textbf{to do: citations}
+If you want to save the results, you can save them
+as a variable that you can then print, plot, etc.
+(Figure~\ref{fig:cml1})
+<<cml0>>=
+mydata.cml = cml(mydata)
+mydata.cml
+@ 
+
+Assigning the results of \code{cml} to a variable
+doesn't produce any output; you need to type
+the name of the variable to get the answers
+to print out.
+
+Plotting the data produces a simple plot
+of the estimated contributions from each
+source (with no error bars): see Figure~\ref{fig:cml1}.
+<<cmlplot1,eval=FALSE>>=
+plot(mydata.cml)
+@ 
+
+
+<<cml1,echo=FALSE,fig.scap="CML estimates for Lahanas 1998 data",fig.cap="CML estimates for Lahanas 1998 data; \\code{plot(mydata.cml)}",base.figure=TRUE,fig.width=8>>=
+plot(mydata.cml)
+@ 
+
+When you print CML results, \R\ will tell you there is no estimate for
+the rookery frequencies, because CML assumes that the true rookery
+frequencies are equal to the sample rookery frequencies, rather than
+estimating the rookery frequencies independently.
+
+The default plot for estimation results plots
+points specifying the estimated
+proportions of the mixed population contributed by each
+rookery (to plot this with a logarithmic scale
+for the vertical axis, use
+\code{plot(mydata.cml,log="y")}).
+
+Standard unconditional maximum likelihood analysis (UML)
+takes a little longer, but is equally straightforward
+\citep{SWT90}:
+
+<<uml0>>=
+mydata.uml = uml(mydata)
+@ 
+
+UML estimates also include estimates of the true
+haplotype frequencies in each rookery, which are
+printed with the contribution estimates 
+(as before, print these results by typing \code{mydata.uml} 
+on a line by
+itself).
+As with CML, you can plot the results with
+\code{plot(mydata.uml)}; by default this plot
+includes just the rookery contribution
+information.
+You can include the estimated haplotype
+frequencies in the rookeries in the graphical summary as follows:
+<<eval=FALSE>>=
+par(ask=TRUE)
+plot(mydata.uml,plot.freqs=TRUE)
+par(ask=FALSE)
+@ 
+(\code{par(ask=TRUE)} tells \R\ to wait
+for user input between successive plots).
+
+\subsection{Confidence intervals:
+CML and UML bootstrapping}
+<<eval=FALSE>>=
+mydata.umlboot = genboot(mydata,"uml")
+@
+<<echo=FALSE>>=
+if (!file.exists("umlboot.RData")) {
+  t1 <- system.time(mydata.umlboot <- genboot(mydata,"uml"))
+  save("t1","mydata.umlboot",file="umlboot.RData",compress=TRUE)
+} else load("umlboot.RData")
+@ 
+will generate standard (nonparametric)
+bootstrap confidence intervals for
+a UML fit to \code{mydata}, by resampling
+the data with replacement 1000 times (by default).
+\emph{This is slow with a realistic size
+data set: it took \Sexpr{round(t1[1]/60,1)}
+minutes to run 1000 bootstrap samples
+on my laptop.}
+(You can ignore warnings about \code{singular matrix, returning
+equal contribs}, \code{Error in qr.solve}, etc..)
+You can find out the results by typing
+<<confint1>>=
+confint(mydata.umlboot)
+@ 
+
+<<umlboot,echo=FALSE,fig.scap="UML with bootstrap CI",fig.cap="UML estimates with bootstrap confidence limits for Lahanas 1998 data: \\code{plot(mydata.umlboot)}",base.figure=TRUE,fig.width=8>>=
+plot(mydata.umlboot,ylim=c(0,1))
+@ 
+
+\subsection{Markov Chain Monte Carlo estimation}
+<<runmcmc,eval=FALSE>>=
+mydata.mcmc = tmcmc(mydata)
+@ 
+<<getmcmcdata,echo=FALSE>>=
+if (!file.exists("mcmc.RData")) {
+  mydata.mcmc <- tmcmc(mydata)
+  save("mydata.mcmc",file="mcmc.RData",compress=TRUE)
+} else load("mcmc.RData")
+@ 
+
+<<confint2>>=
+mydata.mcmc
+confint(mydata.mcmc)
+@ 
+<<plot0,eval=FALSE>>=
+plot(mydata.mcmc)
+@ 
+
+do the standard things: print the results, show confidence
+intervals, plot the results.
+(By default the information on haplotype frequencies
+in rookeries is not saved --- it tends to be voluminous ---
+and so this does not show up in the MCMC results.)
+
+\begin{figure}
+<<plot_mcmc,echo=FALSE,base.figure=TRUE,message=FALSE,fig.width=8,base.figure=TRUE>>=
+plot(mydata.mcmc,ylim=c(0,1),axes=FALSE)
+axis(side=1,at=1:mydata.mcmc$R,labels=gsub("^contrib\\.","",
+                               names(coef(mydata.mcmc)$input.freq)))
+axis(side=2)
+@ 
+\caption{MCMC estimates with confidence limits for Lahanas 1998 data}
+\label{fig:mcmc1}
+\end{figure}
+
+\subsection{Convergence diagnostics for MCMC}
+
+When you are running MCMC analyses, you have to check that
+the Markov chains have \emph{converged} (i.e. that you've
+run everything long enough for a reliable estimate).
+
+\subsubsection{Raftery and Lewis}
+The command
+<<eval=FALSE>>=
+diag1=calc.RL.0(mydata)
+@ 
+(The final character is the numeral 0, not the letter O).
+
+<<echo=FALSE>>=
+if (!file.exists("RL.RData")) {
+  diag1=calc.RL.0(mydata)
+  save("diag1",file="RL.RData")
+} else load("RL.RData")
+@ 
+runs \emph{Raftery and Lewis} diagnostics on your data
+set: these criteria attempt to determine how long a single chain
+has to be in order for it to give ``sufficiently good''
+estimates.  This function actually runs an iterative
+procedure, repeating the chain until the R\&L criterion
+is satisfied.
+
+The results consist of two parts:
+\begin{itemize}
+\item{\verb+diag1$current+ gives the 
+diagnostics for the last chain evaluated.
+These diagnostics consist of the
+predicted required length of
+the ``burn-in'' period (a transient that is discarded);
+the total number of iterations required; a lower bound
+on the total number required; and a ``dependence factor''
+that tells how much correlation  there is between subsequent
+values in the chain (see \code{?raftery.diag} for more
+information).  Here are the first few lines
+of \verb+diag1$current+:
+<<>>=
+head(diag1$current)
+@ 
+}
+\item{
+\verb+diag1$suggested+ gives the history of how
+long each suggested chain was as we went along:
+the iterations stop once suggested $>$current,
+but note that there is a lot of variability in
+the results.
+<<>>=
+diag1$history
+@ 
+}
+\end{itemize}
+
+
+\subsubsection{Gelman and Rubin}
+The command
+<<eval=FALSE>>=
+diag2=calc.GR(mydata)
+@ 
+<<echo=FALSE>>=
+if (!file.exists("GR.RData")) {
+  diag2=calc.GR(mydata)
+  save("diag2",file="GR.RData")
+} else load("GR.RData")
+@ 
+tests the \emph{Gelman-Rubin} criterion, which starts multiple
+chains from widely spaced starting points and tests to ensure
+that the chains ``overlap'' --- i.e., that between-chain
+variance is small relative to within-chain variance. 
+The general rule of thumb is that the criterion should
+be below 1.2 for all parameters in order for the chain
+to be judged to have converged properly.
+\citep{Gelm+96}.
+
+\section{Hierarchical models}
+
+To run hierarchical models, you will need to use either
+\code{WinBUGS} (on Windows, or on Linux or MacOS via a
+program called WINE, or some sort of Windows
+emulator) or \code{JAGS} (a newer, less well-tested
+program, but one that runs more easily on a variety of
+platforms).
+
+Brief installation instructions for these programs:
+\begin{itemize}
+  \item \code{WinBUGS}: go to
+    \url{http://www.mrc-bsu.cam.ac.uk/bugs/winbugs/contents.shtml}
+    and follow the instructions there to download and install
+    \code{WinBUGS} version 1.4 and get a license key.  
+    Then make sure that you've installed the \code{R2WinBUGS} package
+    (\code{install.packages("R2WinBUGS")})
+  \item \code{JAGS}: go to \url{http://www-fis.iarc.fr/~martyn/software/jags/}
+    and download the appropriate version for your computer. Then install 
+    \code{R2jags} (\code{install.packages("R2jags")}) 
+  \end{itemize}
+    You can use the \code{pm.wbugs()} command (with the same syntax
+    as \code{tmcmc} above) to run basic mixed stock analysis
+    (although \code{tmcmc} will in general be much more convenient
+    and efficient: \code{pm.wbugs} is included for completeness
+    and testing of \code{WinBUGS} methods).
+    Use \code{mm.wbugs()} to run many-to-many analyses, with
+    \code{R2WinBUGS} (default, \code{pkg="WinBUGS"}) or \code{JAGS} 
+    (\code{pkg="JAGS"}).
+
+\subsection{Many-to-many analysis}
+
+The \code{simmixstock2} command does basic simulation
+of multiple-mixed-stock systems.  At its simplest,
+it simply generates random uniform values for
+the haplotype frequencies in each rookery
+and the proportional contributions of each
+rookery to each mixed stock (ref Figure~\ref{fig:mmplot0}).:
+
+<<plot_sim1,fig.keep="none">>=
+Z = simmixstock2(nsource=4,nmark=5,nmix=3,
+                 sourcesize=c(4,2,1,1),
+                 sourcesampsize=rep(25,4),
+                 mixsampsize=rep(30,3),rseed=1001)               
+Z
+plot(Z)
+@ 
+
+<<mmplot0,fig.cap="Simulated multiple-mixed-stock data",base.figure=TRUE,echo=FALSE,fig.scap="multiple-mixed-stock simulation">>=
+plot(Z)
+@
+
+Now try to fit this via \code{mm.wbugs}:
+<<echo=FALSE,cache=TRUE>>=
+if (!file.exists("wbugs_cache.RData")) {
+  ## FIXME: would be more efficient to run Zfit0 and then convert
+  ##  the results rather than fitting the whole model twice!
+  st0 <- system.time(Zfit0 <- mm.wbugs(Z,sourcesize=c(4,2,1,1),
+                                       returntype="bugs",pkg="JAGS"))
+  st1 <- system.time(Zfit <- mm.wbugs(Z,sourcesize=c(4,2,1,1),
+                                      pkg="JAGS"))
+  st2 <- system.time(Zfit2 <- mm.wbugs(Z,sourcesize=c(4,2,1,1),
+                                       bugs.code="BB",pkg="JAGS"))
+  save("st0","st1","st2","Zfit","Zfit2","Zfit0",file="wbugs_cache.RData")
+} else load("wbugs_cache.RData")
+@ 
+
+<<eval=FALSE,echo=FALSE>>=
+## tests
+st3 <- system.time(Zfit0 <- mm.wbugs(Z,sourcesize=c(4,2,1,1),
+                                     bugs.code="BB",pkg="JAGS"))
+Zfit2 <- mm.wbugs(Z,sourcesize=c(4,2,1,1),bugs.code="BB",n.iter=200)
+Zfit3 <- mm.wbugs(Z,sourcesize=c(4,2,1,1),bugs.code="BB",n.iter=1000,pkg="JAGS")
+@ 
+
+Or, keeping the run in BUGS format for diagnostic purposes:
+<<bugsfit2,eval=FALSE>>=
+Zfit0 = mm.wbugs(Z,sourcesize=c(4,2,1,1),returntype="bugs")
+@ 
+
+This takes about \Sexpr{round(st1[3]/60,1)} minutes to run with the
+default settings, which run 4 chains (equal to the number of
+sources) for 20,000 steps each.
+(There are two different versions of the BUGS code that can
+be used with \code{mm.wbugs}; in this particular case they
+give relatively similar answers and take about the same amount
+of time (\code{bugs.code="BB"} took \Sexpr{round(st2[3]/60,1)} minutes), 
+but if you're having trouble you might try switching
+from the default \code{bugs.code="TO"} to \code{bugs.code="BB"}.
+
+Other important options when running \code{mm.wbugs} are:
+\begin{itemize}
+\item \code{n.iter}: the default is 20,000 iterations per chain, with
+  the first half used as burn-in (\code{n.burnin=floor(n.iter/2)});
+  this may be conservative, and could take a long time with
+  realistically large data sets.  Use CODA's diagnostics as
+  described above (\code{raftery.diag}, \code{gelman.diag}, etc.)
+  to figure out an appropriate number of iterations.
+\item \code{n.chains}: equal to the number of sources by default,
+  which may again be overkill.  (\cite{Bolker+07} used three chains
+  for an 11-source problem.)
+\item \code{inittype}: \code{"dispersed"} starts the chains from 
+  a starting point where 95\% of the contributions are assumed to
+  come from a single source; \code{"random"} starts the chains from
+  random starting points.  If \code{which.init} is specified, these
+  sources will be used as the dominant starting points: for example,
+  {\tt mm.wbugs(...,n.chains=3,inittype="dispersed",which.init=c(1,5,7))} will 
+  start 3~chains with dominant contributions from sources 1, 5, and 7.  If
+  \code{which.init} is unspecified and \code{n.chains} is less than the
+  number of sources, dominant sources will be picked at random.
+\item \code{returntype}: specifies what format to use for the answer.
+  The default is a \code{mixstock.est} object that can be plotted
+  or summarized like the results from any other mixed-stock analysis.
+  However, for diagnostic purposes, it may be worth running the
+  code initially with \code{returntype="bugs"}
+  and using \code{as.mcmc.bugs} and \code{as.mixstock.est.bugs}
+  to convert the result to either CODA format or mixstock
+  format.  Plotting bugs format and CODA format gives different
+  diagnostic plots; CODA format can also be used to run
+  convergence diagnostics such as \code{raftery.diag} or
+  \code{gelman.diag}.
+\end{itemize}
+
+Plots from many-to-many runs:
+
+Plot BUGS format diagnostics (plot not shown):
+<<eval=FALSE>>=
+plot(Zfit0)
+@ 
+
+Plot CODA diagnostics (plot not shown):
+<<plot_coda,fig.keep="none",eval=FALSE>>=
+plot(as.mcmc.bugs(Zfit0))
+@ 
+(the \code{plotMCMC} package generates prettier diagnostic output).
+
+Plot results:
+<<plot_res1>>=
+plot(Zfit)
+@ 
+
+Source-centric form:
+<<plot_res2>>=
+plot(Zfit,sourcectr=TRUE)
+@ 
+
+\newpage
+Summary/confidence intervals:
+<<sumZfit>>=
+summary(Zfit)
+@ 
+
+Possibly prettier/do it yourself with ggplot:
+<<plot_g2,message=FALSE,tidy=FALSE,fig.height=3>>=
+Zfit.d <- as.data.frame(Zfit)
+library(ggplot2)
+library(grid)
+theme_set(theme_bw())
+zmargin <- theme(panel.margin=unit(0,"lines"))
+ggplot(subset(Zfit.d,type=="input.freq"),
+       aes(x=from,y=est,ymin=lwr,ymax=upr))+
+    geom_pointrange()+facet_wrap(~to)+zmargin
+@ 
+
+\section{Quick start}
+\label{sec:quickstart}
+\begin{itemize}
+\item{Download and install \R\ from
+CRAN (find the site closest to you
+at \url{http://cran.r-project.org/mirrors.html};
+go to ``Precompiled binary distributions'' and
+from there to the base package; pick
+your operating system; download the setup 
+program; and run the setup program).
+}
+\item{Download and install JAGS from \href{http://sourceforge.net/projects/mcmc-jags/files/}{http://sourceforge.net/projects/mcmc-jags/files/}.}
+\item{Start \R.}
+\item{From within \R,
+download and install the \code{mixstock}
+package --- this should automatically install all of the
+dependent packages as well.
+<<quick_install,eval=FALSE>>=
+install.packages("mixstock")
+@ 
+(This installation procedure needs to be done
+only once, although the \code{library} command
+below, loading the package, needs to be done for every new R session.)
+}
+\item{Load the package: \code{library(mixstock)}}
+\item{Load data from a comma-separated value (CSV) file,
+convert to proper format, and condense haplotypes:
+<<quick_condense,eval=FALSE>>=
+mydata = hapfreq.condense(as.mixstock.data(read.csv("myfile.dat")))
+@
+} 
+\item{analyze, e.g:
+<<quick_analyze,eval=FALSE>>=
+mydata.mcmc = tmcmc(mydata)
+mydata.mcmc
+intervals(mydata.mcmc)
+plot(mydata.mcmc)
+@ 
+}
+\end{itemize}
+
+\section{To do}
+\begin{itemize}
+\item{read.csv/read.table + as.mixstock.data combined
+into a single read.mixstock.data command? (also incorporate
+hapfreq.condense as a default option)}
+\item{\code{print.mixstock.est} could print sample frequencies instead of
+saying ``no estimate'' for CML}
+\item{MCMC section could be cleaned up considerably, explained better,
+R\&L parameters not hard-coded, more efficient --- don't
+re-run chains every time}
+\item{incorporate rookery sizes in data}
+\item{keep CODA objects or potential for CODA plots in MCMC results}
+\item{make MCMC convergence process more efficient: more explanation}
+\item{add hierarchical models????}
+\item{describe fuzz and bounds parameters on CML/UML,
+E-M algorithm}
+\item{plot(...,legend=TRUE) doesn't work for CML.
+add unstacked/beside=TRUE option to plot.mixstock.est}
+\item incorporate source size data as part of data object
+\item some functions don't work with uncondensed data: fix or issue warning
+\item use \code{HPDinterval} from CODA for confidence intervals,
+  rather than quantiles?
+\end{itemize}
+
+\bibliography{mixstock}
+\end{document}
+

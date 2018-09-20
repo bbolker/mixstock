@@ -1,0 +1,54 @@
+citHeader("To cite package 'mixstock' in publications use one or more of the following [package for software citation plus Bolker et al. (2003) for many-to-one or Bolker et al. (2007) for many-to-many methods]:")
+year <- sub(".*(2[[:digit:]]{3})-.*", "\\1", meta$Date)
+vers <- paste("R package version", meta$Version)
+citEntry(entry="Manual",
+         title = "mixstock: mixed stock analysis in R",
+         author = personList(as.person("Ben Bolker")),
+         year = year,
+         note = vers,
+         textVersion =
+         paste("Ben Bolker (",
+               year,
+               "). mixstock: mixed stock analysis in R. ",
+               vers, ".", sep=""))
+
+citEntry(entry="Article",
+         author = personList(as.person("Benjamin Bolker"),
+           as.person("Toshinori Okuyama"),
+           as.person("Karen Bjorndal"),
+           as.person("Alan Bolten")),
+         title = paste("Stock estimation for sea turtle populations",
+           "using genetic markers:",
+           "accounting for sampling error of rare genotypes."),
+         journal = "Ecological Applications",
+         year = "2003",
+         volume = "13",
+         pages = "763-775",
+         number = "3",
+         textVersion=paste("Bolker et al. (2003).",
+           "Stock estimation for sea turtle populations",
+           "using genetic markers:",
+           "accounting for sampling error of rare genotypes.",
+           "Ecological Applications 13:763-775"))
+
+citEntry(entry="Article",
+         author = personList(as.person("Benjamin Bolker"),
+           as.person("Toshinori Okuyama"),
+           as.person("Karen Bjorndal"),
+           as.person("Alan Bolten")),
+         title = paste("Incorporating multiple mixed stocks",
+           "in mixed stock analysis:",
+           "'many-to-many' analyses"),
+         journal = "Molecular Ecology",
+         year = "2007",
+         volume = "16",
+         pages = "685-695",
+         doi = "10.1111/j.1365-294X.2006.03161.x",
+         textVersion=paste("Bolker et al. (2007).",
+           "Incorporating multiple mixed stocks",
+           "in mixed stock analysis:",
+           "'many-to-many' analyses",
+           "Molecular Ecology 16:685-695.",
+           "doi:10.1111/j.1365-294X.2006.03161.x"))
+
+

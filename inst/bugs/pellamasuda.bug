@@ -1,0 +1,41 @@
+## DATA
+##  N,   number in mixed stock
+##  T[r] number in each source sample
+##  H    number of markers
+##  R    number of sources
+##  sourcesamp[r,h] number of marker h in source r
+##  mixsamp[i,h]  0/1 (1 if individual i has marker h)
+## PRIORS
+##  sourceprior[r,h] prior prob. of marker h in source r
+##  contprior[r]   prior prob. of coming from source r
+## VARIABLES
+##  theta   contrib of source r to mixed sample
+##  Z[i]    origin of individual i in mixed sample
+##  pi[r,h] proportion of marker h in source r
+## DERIVED
+##   Zm[i,r] 0/1 table of imputed origins
+##   nZ[r]   number imputed to each source
+model{
+  ## impute origins of mixed-samp individuals
+  ## (their marker depends on their imputed origin)
+  for(i in 1:N){
+    Z[i] ~ dcat(theta[1:R])
+    mixsamp[i,1:H] ~ dmulti(pi[Z[i],],1)
+    for (r in 1:R) {  ## track total numbers
+        Zm[i,r] <- equals(Z[i],r)
+    }
+  }
+  for(r in 1:R){ ## source freqs based on pi
+     sourcesamp[r,1:H] ~ dmulti(pi[r,1:H],T[r]) 
+     nZ[r] <- sum(Zm[,r]) ## track totals imputed to each source
+  }
+  ## prior for source marker frequencies
+  for(r in 1:R){
+      pi[r,1:H] ~ ddirch(sourceprior[r,1:H])
+  }                         
+  ## prior for origins
+  theta[1:R] ~ ddirch(contprior[1:R])
+}
+
+
+
