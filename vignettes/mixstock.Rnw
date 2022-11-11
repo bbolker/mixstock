@@ -292,7 +292,7 @@ plot(mydata,mix.off=2)
 @
 
 %\begin{figure}
-<<echo=FALSE,eval=FALSE>>=
+<<alt_ggplot,echo=FALSE,eval=FALSE>>=
 require(ggplot2)
 require(reshape2)
 tmpf <- function(m0) {
@@ -418,7 +418,7 @@ includes just the rookery contribution
 information.
 You can include the estimated haplotype
 frequencies in the rookeries in the graphical summary as follows:
-<<eval=FALSE>>=
+<<fakeplot,eval=FALSE>>=
 par(ask=TRUE)
 plot(mydata.uml,plot.freqs=TRUE)
 par(ask=FALSE)
@@ -428,10 +428,10 @@ for user input between successive plots).
 
 \subsection{Confidence intervals:
 CML and UML bootstrapping}
-<<eval=FALSE>>=
+<<fakeboot,eval=FALSE>>=
 mydata.umlboot = genboot(mydata,"uml")
 @
-<<echo=FALSE>>=
+<<loadboot,echo=FALSE>>=
 if (!file.exists("umlboot.RData")) {
   t1 <- system.time(mydata.umlboot <- genboot(mydata,"uml"))
   save("t1","mydata.umlboot",file="umlboot.RData",compress=TRUE)
@@ -500,7 +500,7 @@ run everything long enough for a reliable estimate).
 
 \subsubsection{Raftery and Lewis}
 The command
-<<eval=FALSE>>=
+<<fakeRL,eval=FALSE>>=
 diag1=calc.RL.0(mydata)
 @ 
 (The final character is the numeral 0, not the letter O).
