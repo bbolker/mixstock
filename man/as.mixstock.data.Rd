@@ -46,7 +46,9 @@ as.mixstock.data(object,nmix=1,sourcesize)
   \item{R}{number of sources}
   \item{H}{number of marker classes (haplotypes)}
   \item{sourcesamp}{samples from sources, in an HxR matrix}
-  \item{mixsamp}{a vector of sample from the mixed population}
+  \item{mixsamp}{a vector of samples from the mixed population, or
+  (for multiple mixed-stock problems) a matrix with haplotypes as columns
+  and mixed stocks as rows}
   \code{print.mixstock.data} and \code{plot.mixstock.data} give
   textual and graphical summaries of the results
 }
@@ -59,5 +61,11 @@ x <- matrix(c(23,34,10,10,11,4,4,5,2),byrow=TRUE,nrow=3)
 dx <- as.mixstock.data(x)
 dx
 plot(dx)
+x2 <- read.csv(text="
+R1,R2,R3,mix1,mix2
+H1,1,2,3,4,7
+H2,3,4,5,6,0
+")
+plot(as.mixstock.data(x2, nmix = 2))
 }
 \keyword{misc}

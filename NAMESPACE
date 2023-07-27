@@ -33,7 +33,7 @@ export(MAXMARK,MAXSRC,addlabels.barplot,blockdiag,
        cml.lik,dcmat.a,
        expand.bugs.data,mixstock.boot,mysum,
        runsims,mysumvec,packval,unpackval,p.to.q,q.to.p,startvec0,startvec,lsolve,
-       normcols)
+       normcols,calc.RL.0)
 exportClasses(toptim,mixstock)
 S3method(plot,mixstock.data)
 S3method(plot,mixstock.est)
