@@ -107,7 +107,7 @@ void rdirich(double *shape, int ncat, double *results) {
   static double minval=1.0e-200;
 
   if (ncat>MAXNCAT) {
-    Rprintf("ERROR: number of categories (%d) > max (%d) in rdirich\n",
+    Rprintf("ERROR: number of categories (%d) > max (%ld) in rdirich\n",
 	    ncat,MAXNCAT);
     /* exit(1); */  /* FIXME, should throw error */
   }

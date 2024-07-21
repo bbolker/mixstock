@@ -249,7 +249,7 @@ double multilik(double * prob, int * samp, int n,
     if (!(prob[i]==0 && samp[i]==0)) {
       lik -= (double)samp[i]*log(prob[i]);
       if (debug==1)
-	Rprintf("mlik: %d %f %f %f\n",i,lik,samp[i],log(prob[i]));
+	Rprintf("mlik: %d %f %d %f\n",i,lik,samp[i],log(prob[i]));
     }
   }
   if (full) {
@@ -339,9 +339,9 @@ void loglik2wrap(double *lik,  /* likelihood (return value) */
    }
    if (*debug==1) {
      for (k=0; k<(*R)*(*H); k++)
-       Rprintf("LL2W: %f %f\n",hvec[k],n_samp[k]);
+       Rprintf("LL2W: %f %d\n",hvec[k],n_samp[k]);
      for (k=0; k<(*H); k++)
-       Rprintf("LL2W: %f %f\n",pool_freq[k],s_samp[k]);
+       Rprintf("LL2W: %f %d\n",pool_freq[k],s_samp[k]);
    }
    m1= multilik(pool_freq,s_samp,*H,*full,*debug);
    m2 = 0;

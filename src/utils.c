@@ -81,7 +81,7 @@ void * salloc(size_t s)
       if (t==NULL) {
 	  REprintf("Sorry: out of memory\n");
 	  /* fflush(stderr); */
-	  REprintf("(tried to allocate %d bytes, total allocation so far=%1.0f)\n",s,tot_alloc);
+	  REprintf("(tried to allocate %ld bytes, total allocation so far=%1.0f)\n",s,tot_alloc);
 	  /* fflush(stderr); */
 	  /* exit(12); */
       }
